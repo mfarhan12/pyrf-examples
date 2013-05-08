@@ -5,7 +5,7 @@ import sys
 import numpy as np
 
 from pyrf.devices.thinkrf import WSA4000
-from pyrf.util import read_data_and_reflevel
+from pyrf.util import read_data_and_context
 from pyrf.config import TriggerSettings
 from pyrf.numpy_util import compute_fft
 
@@ -23,20 +23,19 @@ dut = WSA4000()
 dut.connect(sys.argv[1])
 powerSize = dut.spp()
 
+if len(sys.argv) > 2:
+    center_freq = int(sys.argv[2]) * 1e6
+else:
+    center_freq = 2450e6
+
 # setup WSA settings
 dut.reset()
 dut.request_read_perm()
 dut.ifgain(0)
-dut.freq(2450e6)
+dut.freq(center_freq)
 dut.gain('high')
 dut.fshift(0)
 dut.decimation(0)
-trigger = TriggerSettings(
-    trigtype="LEVEL",
-    fstart=2400e6,
-    fstop=2480e6,
-    amplitude=-70)
-dut.trigger(trigger)
 
 # Create a GL View widget to display data
 app = QtGui.QApplication([])
@@ -83,12 +82,12 @@ def update():
     global p3, z, colors
     
     # read data
-    data, reflevel = read_data_and_reflevel(dut, powerSize)
+    data, context = read_data_and_context(dut, powerSize)
     
     # ignore the reference level so plot doesn't change positions
-    reflevel.fields['reflevel'] = STATIC_REFLEVEL
+    context['reflevel'] = STATIC_REFLEVEL
     # compute the fft of the complex data
-    powData = compute_fft(dut, data, reflevel)
+    powData = compute_fft(dut, data, context)
     
     # compress the FFT into a 128 array
     zData = represent_fft_to_plot(powData)
@@ -107,7 +106,7 @@ def update():
     colors[:,1,:] = create_color_heatmap(powData)
     
     # update the plot
-    p3.setData(z= z, colors = colors.reshape(xSize*ySize,4))
+    p3.setData(z = z, colors = colors.reshape(xSize*ySize,4))
 
 timer = QtCore.QTimer()
 timer.timeout.connect(update)
