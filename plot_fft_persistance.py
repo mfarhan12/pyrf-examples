@@ -62,11 +62,24 @@ fft_plot.setLabel('left', text= 'Power', units = 'dBm', unitPrefix=None)
 # disable auto size of the x-y axis
 fft_plot.enableAutoRange('xy', False)
 
-# initialize a curve for the plot 
-curve = fft_plot.plot(pen='g')
+# initialize multiple curves to represent multiple colours
+number_of_curves = 128
+number_of_fade_curves = 5
+curve = []
+curve = [None] * number_of_curves
+for i in range(number_of_curves):    
+    curve[i] = fft_plot.plot(pen='g')
+
+fade_curve = []
+fade_curve = [None] * number_of_fade_curves
+for i in range(number_of_fade_curves):    
+    fade_curve[i] = fft_plot.plot(pen='g')
+    
+cont_pow_data = np.zeros([number_of_fade_curves,SAMPLE_SIZE]) + 500
+
 
 def update():
-    global dut, curve, fft_plot, freq_range, center_freq, bandwidth
+    global dut, curve, fft_plot, freq_range, center_freq, bandwidth, cont_pow_data, fade_curve
     # read data
     data, context = read_data_and_context(dut, SAMPLE_SIZE)
     center_freq = context['rffreq']
@@ -85,7 +98,34 @@ def update():
     
     # compute the fft and plot the data
     powData = compute_fft(dut, data, context)
-    curve.setData(freq_range,powData, pen = 'g')
+
+    for i in range(number_of_fade_curves):
+
+        #fade_curve[i].setData(freq_range,cont_pow_data[i,:],pen = (255,0,255,i * (255 / number_of_fade_curves)) )
+        
+        if i ==  number_of_fade_curves - 1:
+            cont_pow_data[i,:] = powData
+        else:
+            cont_pow_data[i,:] = cont_pow_data[i + 1,:]
+    
+    variance = np.zeros(number_of_curves)
+    for i in range(number_of_curves):
+        variance[i] = np.std(cont_pow_data[:,i])
+        
+        if variance[i] < 10:
+            color = 'r'
+        else:
+            color = 'b'
+            
+        x = np.array(freq_range[i * 8:(i * 8) + 7])
+        y = np.array(powData[i * 8:(i * 8) + 7])
+        if i == 57:
+            color = 'g'
+        curve[i].setData(x,y,pen = color)
+
+    
+   
+
 
 timer = QtCore.QTimer()
 timer.timeout.connect(update)

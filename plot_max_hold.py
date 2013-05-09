@@ -12,7 +12,7 @@ import sys
 
 # plot constants
 center_freq = 2450 * 1e6 
-SAMPLE_SIZE = 2048
+SAMPLE_SIZE = 1024
 RF_GAIN = 'high'
 IF_GAIN = 0
 DECIMATION = 1
@@ -38,45 +38,54 @@ dut.ifgain(IF_GAIN)
 dut.fshift(FREQ_SHIFT)
 dut.decimation(DECIMATION)
 
-# initialize plot
-fft_plot = win.addPlot(title="IQ Plot")
+# initialize fft plot
+fft_plot = win.addPlot(title="Power Vs. Frequency")
 
-# initialize axes limits
-plot_xmin = 0
-plot_xmax = 1000
+# initialize plot axes limits
+plot_xmin = (center_freq) - (bandwidth / 2)
+plot_xmax = (center_freq) + (bandwidth / 2)
 
-plot_ymin = -1
-plot_ymax = 1
+plot_ymin = -130
+plot_ymax = 20
 
 # initialize the frequency range (Hz)
 freq_range = np.linspace(plot_xmin , plot_xmax, SAMPLE_SIZE)
 
-# initialize the x-axis of the plot
+# initialize the x-axis of the fft plot
 fft_plot.setXRange(plot_xmin,plot_xmax)
-fft_plot.setLabel('bottom', text= 'Time', units = None, unitPrefix=None)
+fft_plot.setLabel('bottom', text= 'Frequency', units = 'Hz', unitPrefix=None)
 
-# initialize the y-axis of the plot
+# initialize the y-axis of the fft plot
 fft_plot.setYRange(plot_ymin ,plot_ymax)
+fft_plot.setLabel('left', text= 'Power', units = 'dBm', unitPrefix=None)
 
 # disable auto size of the x-y axis
 fft_plot.enableAutoRange('xy', False)
 
-# initialize the i-q curves for the plot 
-i_curve = fft_plot.plot(pen='g')
-q_curve = fft_plot.plot(pen='r')
+
+fft_curve = fft_plot.plot(pen='g')
+max_curve = fft_plot.plot(pen='y')
+
+max_hold = np.zeros(SAMPLE_SIZE) - 500
+
 def update():
-    global dut, i_curve, q_curve
+    global dut, fft_curve, max_curve, freq_range
     # read data
     data, context = read_data_and_context(dut, SAMPLE_SIZE)
-    iq_data = data.data.numpy_array()
+         
+    # compute the fft and plot the data
+    pow_data = compute_fft(dut, data, context)
+    for i in range(len(pow_data)):
+        if pow_data[i] > max_hold[i]:
+            max_hold[i] = pow_data[i]
+        
     
-    # extract i and q data and normalize
-    i_data = (np.array(iq_data[:,0], dtype=float)) / 8192
-    q_data = (np.array(iq_data[:,1], dtype=float)) / 8192
+    fft_curve.setData(freq_range,pow_data,pen = 'g')
+    max_curve.setData(freq_range,max_hold,pen = 'y')
     
-    # update curves
-    i_curve.setData(freq_range, i_data, pen = 'g')
-    q_curve.setData(freq_range, q_data, pen = 'r')
+   
+
+
 timer = QtCore.QTimer()
 timer.timeout.connect(update)
 timer.start(0)
