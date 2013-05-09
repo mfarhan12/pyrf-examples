@@ -59,6 +59,21 @@ def create_color_heatmap(powData):
        
     return colorArray
     
-    
+        
+def convert_freq_to_index(freq_range, bandwidth, index_size):
+    # convert a frequency range (MHZ) to an index range depending on the index size         
+    index_range = []
+    i = 0
+    index_range = [None] * 2
+    for freq in freq_range:
+        if freq < 0:
+                freq = freq + (bandwidth / 2)
+                index_range[i] = freq * (((index_size / 2) - 1) / (bandwidth / 2))          
+        else:
+             index_range[i] = freq * ((index_size / 2)/ (bandwidth / 2)) + 512
+             
+        i = i + 1
+        
+    return index_range
     
     
