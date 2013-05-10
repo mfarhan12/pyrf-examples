@@ -1,5 +1,6 @@
 pyqtgraph_examples.py
 workspace.py
+plot_fft_persistance.py
 *.pyc
 
 

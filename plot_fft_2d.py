@@ -84,8 +84,8 @@ def update():
     fft_plot.setLabel('bottom', text= 'Frequency', units = 'Hz', unitPrefix=None)
     
     # compute the fft and plot the data
-    powData = compute_fft(dut, data, context)
-    curve.setData(freq_range,powData, pen = 'g')
+    pow_data = compute_fft(dut, data, context)
+    curve.setData(freq_range,pow_data, pen = 'g')
 
 timer = QtCore.QTimer()
 timer.timeout.connect(update)

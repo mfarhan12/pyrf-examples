@@ -3,77 +3,82 @@ import numpy as np
 PLOT_SIZE = 128
 MAX_DBM_DIFFERENCE = 60
 
-def represent_fft_to_plot(powData):
+def represent_fft_to_plot(pow_data):
     # represent an FFT in a 128 integer array to be represented in a 3D plot
     
     zData = np.zeros(shape =(PLOT_SIZE,1))
-    fftSize = len(powData)
+    fftSize = len(pow_data)
     for i in range(PLOT_SIZE):
         startIndex = i * (fftSize / PLOT_SIZE)
         endIndex = (i * (fftSize / PLOT_SIZE)) + ((fftSize / PLOT_SIZE) - 1)
-        zData[i] = (np.amax(powData[startIndex:endIndex]) + 100)
+        zData[i] = (np.amax(pow_data[startIndex:endIndex]) + 100)
     
     return zData
     
-def create_color_heatmap(powData):
+def create_color_heatmap(pow_data):
 # create a colored array to represent an FFT
     
-    fftSize = len(powData)
+    fftSize = len(pow_data)
     colorArray = np.ones((PLOT_SIZE,4), dtype = float)
-    powDataAverage = np.average(powData)
-    powDataMin = powDataAverage - 5
-    powDataMax = powDataAverage + (-1 *  powDataMin)+ MAX_DBM_DIFFERENCE
+    pow_dataAverage = np.average(pow_data)
+    pow_dataMin = pow_dataAverage - 5
+    pow_dataMax = pow_dataAverage + (-1 *  pow_dataMin)+ MAX_DBM_DIFFERENCE
     
     for i in range(PLOT_SIZE):
         startIndex = i * (fftSize / PLOT_SIZE)
         endIndex = (i * (fftSize / PLOT_SIZE)) + ((fftSize / PLOT_SIZE) - 1)
-        fftAreaMax = np.amax(powData[startIndex:endIndex]) 
+        fftAreaMax = np.amax(pow_data[startIndex:endIndex]) 
         
         # max data is red
-        if fftAreaMax > powDataMax:
+        if fftAreaMax > pow_dataMax:
             colorArray[i,0] = 1
             colorArray[i,1] = 0
             colorArray[i,2] = 0
             continue
         # min data is blue
-        elif fftAreaMax < powDataMin :
+        elif fftAreaMax < pow_dataMin :
             colorArray[i,0] = 0
             colorArray[i,1] = 0
             colorArray[i,2] = 1
             continue
         
         # scale everything in between    
-        scaledVal = fftAreaMax + (-1 * powDataMin)
+        scaledVal = fftAreaMax + (-1 * pow_dataMin)
         
         # colours for lower bound (blue - green transition)
-        if scaledVal < (powDataMax/2):
+        if scaledVal < (pow_dataMax/2):
             colorArray[i,0] = 0
-            colorArray[i,1] = 0.2 + scaledVal/powDataMax
-            colorArray[i,2] = 1 - (scaledVal/powDataMax)
+            colorArray[i,1] = 0.2 + scaledVal/pow_dataMax
+            colorArray[i,2] = 1 - (scaledVal/pow_dataMax)
         
         # colours for upper bound (green - red transition)
-        elif scaledVal >= (powDataMax/2):
-            colorArray[i,0] = scaledVal/powDataMax
-            colorArray[i,1] = 1 - (scaledVal/powDataMax)
+        elif scaledVal >= (pow_dataMax/2):
+            colorArray[i,0] = scaledVal/pow_dataMax
+            colorArray[i,1] = 1 - (scaledVal/pow_dataMax)
             colorArray[i,2] = 0
        
     return colorArray
     
         
-def convert_freq_to_index(freq_range, bandwidth, index_size):
-    # convert a frequency range (MHZ) to an index range depending on the index size         
-    index_range = []
-    i = 0
-    index_range = [None] * 2
-    for freq in freq_range:
-        if freq < 0:
-                freq = freq + (bandwidth / 2)
-                index_range[i] = freq * (((index_size / 2) - 1) / (bandwidth / 2))          
-        else:
-             index_range[i] = freq * ((index_size / 2)/ (bandwidth / 2)) + 512
-             
-        i = i + 1
+def find_max_index(array):
+    # returns the maximum index of an array         
+    
+    # keep track of max index
+    index = 0
+    
+    array_size = len(array)
+    
+    max_value = 0
+    for i in range(array_size):
         
-    return index_range
+        if i == 0:
+            max_value = array[i]
+            index = i
+        elif array[i] > max_value:
+            max_value = array[i]
+            index = i
+    
+    
+    return index
     
     

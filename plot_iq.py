@@ -66,6 +66,7 @@ i_curve = fft_plot.plot(pen='g')
 q_curve = fft_plot.plot(pen='r')
 def update():
     global dut, i_curve, q_curve
+    
     # read data
     data, context = read_data_and_context(dut, SAMPLE_SIZE)
     iq_data = data.data.numpy_array()

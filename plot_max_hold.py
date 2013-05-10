@@ -9,7 +9,7 @@ from pyrf.util import read_data_and_context
 from pyrf.config import TriggerSettings
 from pyrf.numpy_util import compute_fft
 import sys
-import gc
+
 # plot constants
 center_freq = 2450 * 1e6 
 SAMPLE_SIZE = 1024
@@ -21,9 +21,9 @@ FREQ_SHIFT = 0
 
 # declare the GUI
 app = QtGui.QApplication([])
-win = pg.GraphicsWindow(title="ThinkRF FFT Plot Example")
+win = pg.GraphicsWindow()
 win.resize(1000,600)
-win.setWindowTitle("PYRF FFT Plot Example")
+win.setWindowTitle("PYRF Max Hold Example")
 
 # connect to WSA4000 device
 dut = WSA4000()
@@ -39,7 +39,7 @@ dut.fshift(FREQ_SHIFT)
 dut.decimation(DECIMATION)
 
 # initialize fft plot
-fft_plot = win.addPlot(title="Power Vs. Frequency")
+fft_plot = win.addPlot(title="Power (dBm) Vs. Frequency (MHz)")
 
 # initialize plot axes limits
 plot_xmin = (center_freq) - (bandwidth / 2)
@@ -62,33 +62,38 @@ fft_plot.clear()
 # disable auto size of the x-y axis
 fft_plot.enableAutoRange('xy', False)
 
-
+# initialize FFT curve
 fft_curve = fft_plot.plot(pen='g')
+
+# initialize max hold curve
 max_curve = fft_plot.plot(pen='y')
 
-max_hold = np.zeros(SAMPLE_SIZE) - 500
+# initialize the max hold curve with a very large negative number
+max_hold = np.zeros(SAMPLE_SIZE) - 500 
 
 def update():
-    global dut, fft_curve, max_curve, freq_range
-    # read data
+    global dut, fft_curve, max_curve,fft_plot, freq_range
+    
+    # read data from wsa
     data, context = read_data_and_context(dut, SAMPLE_SIZE)
-    gc.collect()
+
     # compute the fft and plot the data
     pow_data = compute_fft(dut, data, context)
+    
+    # update the max curve
     for i in range(len(pow_data)):
         if pow_data[i] > max_hold[i]:
             max_hold[i] = pow_data[i]
-        
-    
+
+    # plot the standard FFT curve
     fft_curve.setData(freq_range,pow_data,pen = 'g')
-    max_curve.setData(freq_range,max_hold,pen = 'y')
     
-   
-
-
+    # plot the max hold curve
+    max_curve.setData(x=freq_range,y=max_hold,pen = 'y')
+ 
 timer = QtCore.QTimer()
 timer.timeout.connect(update)
-timer.start(0)
+timer.start(10)
 
 
 

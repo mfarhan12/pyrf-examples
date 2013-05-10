@@ -8,8 +8,9 @@ from pyrf.devices.thinkrf import WSA4000
 from pyrf.util import read_data_and_context
 from pyrf.config import TriggerSettings
 from pyrf.numpy_util import compute_fft
-from pyqtgraph_util import find_max_index
 import sys
+import gc
+import msvcrt
 
 # plot constants
 CENTER_FREQ = 2450 * 1e6 
@@ -21,13 +22,12 @@ bandwidth = (125 *1e6) / DECIMATION
 FREQ_SHIFT = 0
 
 # declare the GUI
-win = pg.GraphicsWindow()
-win.resize(1000,600)
-win.setWindowTitle("PYRF FFT Cursor Plot Example")
+app = QtGui.QApplication([])
+win = pg.GraphicsWindow(title="ThinkRF FFT Plot Example")
 
-# add the label to display the position of max value
 label = pg.LabelItem(justify='right')
 win.addItem(label)
+win.setWindowTitle("PYRF FFT Plot Example")
 
 # connect to WSA4000 device
 dut = WSA4000()
@@ -43,7 +43,7 @@ dut.fshift(FREQ_SHIFT)
 dut.decimation(DECIMATION)
 
 # initialize plot
-fft_plot = win.addPlot(title="Power (dBm) Vs. Frequency (MHz)",row=1, col =0)
+fft_plot = win.addPlot(title="Power Vs. Frequency",row=1, col =0)
 fft_plot.setAutoVisible(y=True)
 
 # initialize axes limits
@@ -70,21 +70,17 @@ fft_plot.enableAutoRange('xy', False)
 # initialize a curve for the plot 
 curve = fft_plot.plot(pen='g')
 
-# initialize region selection lines
-region_selection_lines = pg.LinearRegionItem([CENTER_FREQ - 10e6,CENTER_FREQ + 10e6])
-region_selection_lines.setZValue(-10)   
-fft_plot.addItem(region_selection_lines)
-
-# initialize a plot to hold the maximum value
+# add a scatter plot to plot the maximum point
 max_location = pg.ScatterPlotItem()
 fft_plot.addItem(max_location)
 
 def update():
-
     global dut, curve, fft_plot, freq_range, max_location
 
     # read data
     data, context = read_data_and_context(dut, SAMPLE_SIZE)
+    
+    # retrieve freq and bandwidth to update axis
     center_freq = context['rffreq']
     bandwidth = context['bandwidth']
     
@@ -95,41 +91,31 @@ def update():
     # update the frequency range (Hz)
     freq_range = np.linspace(plot_xmin , plot_xmax, SAMPLE_SIZE)
     
-    # initialize the x-axis of the plot
+    # update the x-axis of the plot
     fft_plot.setXRange(plot_xmin,plot_xmax)
     fft_plot.setLabel('bottom', text= 'Frequency', units = 'Hz', unitPrefix=None)
     
     # compute the fft and plot the data
     pow_data = compute_fft(dut, data, context)
+           
+    # determine the index of the maximum point
+    max_index = np.argmax(pow_data)
     
-    # grab new cursor region
-    cursor_region = region_selection_lines.getRegion()
-    index_region = np.zeros(2)
-    
-    # 
-    index_region[0] =  int((cursor_region[0] - plot_xmin) * SAMPLE_SIZE/bandwidth)
-    if index_region[0] < 0:
-        index_region[0] = 0
-    
-    index_region[1] =  int((cursor_region[1] - plot_xmin) * SAMPLE_SIZE/bandwidth)
-    if index_region[1] > SAMPLE_SIZE:
-        index_region[1] = SAMPLE_SIZE
-    
-
-    max_index = find_max_index(pow_data[np.amin(index_region):np.amax(index_region)])
-    
-    if max_index < np.amin(index_region):
-        max_index = max_index + np.amin(index_region)
-
+    # retrieve maximum power and freq of max power
     max_freq = freq_range[max_index]
     max_pow = pow_data[max_index]
-    label.setText("<span style='color: green'>Max Frequency Location=%0.1f MHz,  Power=%0.1f dBm</span>" % (max_freq/1e6, max_pow))
     
-    # TODO: use better method than bellow
-    # hold maximum positions
+    # update label
+    label.setText("<span style='color: green'>Max Frequency Location=%0.1f MHz,  Power=%0.1f dBm</span>" % (max_freq/1e6, max_pow))
+
+    # TODO: Find a better way then using an array with small random values
+    # create array of small numbers
     pos = np.random.normal(size=(2,1), scale=1e-9)
     
+    # update scatter plot
     max_location.setData(x =pos[0] + max_freq , y =  pos[0] + max_pow, size = 20, symbol = 't')
+    
+    # update fft curve
     curve.setData(freq_range,pow_data, pen = 'g')
   
 timer = QtCore.QTimer()
