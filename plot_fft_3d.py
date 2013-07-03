@@ -75,7 +75,6 @@ p3.scale(16./49., 20, 0.1)
 # determine the location on the gride
 p3.translate(-12, -50, 0)
 w.addItem(p3)
-
 w.pan(-10,-10,-10)
 def update():
     # update the plot to show new data
@@ -88,9 +87,7 @@ def update():
     context['reflevel'] = STATIC_REFLEVEL
     # compute the fft of the complex data
     powData = compute_fft(dut, data, context)
-    
-    # compress the FFT into a 128 array
-    zData = represent_fft_to_plot(powData)
+
 
     # move the data stream as well as colours back to show new data
     for i in range (ySize):

@@ -11,7 +11,7 @@ from pyrf.numpy_util import compute_fft
 import sys
 
 # plot constants
-center_freq = 2450 * 1e6 
+center_freq = 1005 * 1e6 
 SAMPLE_SIZE = 2048
 RF_GAIN = 'high'
 IF_GAIN = 0
@@ -39,7 +39,7 @@ dut.fshift(FREQ_SHIFT)
 dut.decimation(DECIMATION)
 
 # initialize plot
-fft_plot = win.addPlot(title="IQ Plot")
+plot = win.addPlot(title="IQ Plot")
 
 # initialize axes limits
 plot_xmin = 0
@@ -52,18 +52,18 @@ plot_ymax = 1
 freq_range = np.linspace(plot_xmin , plot_xmax, SAMPLE_SIZE)
 
 # initialize the x-axis of the plot
-fft_plot.setXRange(plot_xmin,plot_xmax)
-fft_plot.setLabel('bottom', text= 'Time', units = None, unitPrefix=None)
+plot.setXRange(plot_xmin,plot_xmax)
+plot.setLabel('bottom', text= 'Time', units = None, unitPrefix=None)
 
 # initialize the y-axis of the plot
-fft_plot.setYRange(plot_ymin ,plot_ymax)
+plot.setYRange(plot_ymin ,plot_ymax)
 
 # disable auto size of the x-y axis
-fft_plot.enableAutoRange('xy', False)
+plot.enableAutoRange('xy', False)
 
 # initialize the i-q curves for the plot 
-i_curve = fft_plot.plot(pen='g')
-q_curve = fft_plot.plot(pen='r')
+i_curve = plot.plot(pen='g')
+q_curve = plot.plot(pen='r')
 def update():
     global dut, i_curve, q_curve
     

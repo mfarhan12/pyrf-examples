@@ -88,6 +88,12 @@ def update():
     center_freq = context['rffreq']
     bandwidth = context['bandwidth']
     
+    # compute the fft and plot the data
+    pow_data = compute_fft(dut, data, context)
+    
+    if self.marker_freq == None:
+        self.marker_freq = self.center_freq
+    
     # update axes limits
     plot_xmin = (center_freq) - (bandwidth / 2)
     plot_xmax = (center_freq) + (bandwidth / 2)
@@ -99,8 +105,7 @@ def update():
     fft_plot.setXRange(plot_xmin,plot_xmax)
     fft_plot.setLabel('bottom', text= 'Frequency', units = 'Hz', unitPrefix=None)
     
-    # compute the fft and plot the data
-    pow_data = compute_fft(dut, data, context)
+
     
     # grab new cursor region
     cursor_region = region_selection_lines.getRegion()

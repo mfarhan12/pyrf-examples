@@ -5,18 +5,15 @@ from pyqtgraph.Qt import QtGui, QtCore
 import numpy as np
 import pyqtgraph as pg
 from pyrf.devices.thinkrf import WSA4000
-from pyrf.util import read_data_and_context
-from pyrf.config import TriggerSettings
-from pyrf.numpy_util import compute_fft
+from pyrf.sweep_device import SweepDevice
 import sys
 
 # plot constants
-center_freq = 2450 * 1e6 
+START_FREQ = 2400e6 
+STOP_FREQ = 2700e6
+CENTER_FREQ = ((STOP_FREQ - START_FREQ) / 2) + START_FREQ
 SAMPLE_SIZE = 1024
 RF_GAIN = 'high'
-IF_GAIN = 0
-DECIMATION = 4
-bandwidth = (125 *1e6) / DECIMATION
 FREQ_SHIFT = 0
 
 # declare the GUI
@@ -28,31 +25,19 @@ win.setWindowTitle("PYRF FFT Plot Example")
 # connect to WSA4000 device
 dut = WSA4000()
 dut.connect(sys.argv[1])
-
-# initialize WSA constants
-dut.reset()
-dut.request_read_perm()
-dut.freq(center_freq)
-dut.gain(RF_GAIN)
-dut.ifgain(IF_GAIN)
-dut.fshift(FREQ_SHIFT)
-dut.decimation(DECIMATION)
-
+sd = SweepDevice(dut)
 # initialize plot
 fft_plot = win.addPlot(title="Power Vs. Frequency")
 
-# initialize axes limits
-plot_xmin = (center_freq) - (bandwidth / 2)
-plot_xmax = (center_freq) + (bandwidth / 2)
 
 plot_ymin = -130
 plot_ymax = 20
 
-# initialize the frequency range (Hz)
-freq_range = np.linspace(plot_xmin , plot_xmax, SAMPLE_SIZE)
 
+
+    
 # initialize the x-axis of the plot
-fft_plot.setXRange(plot_xmin,plot_xmax)
+fft_plot.setXRange(START_FREQ , STOP_FREQ)
 fft_plot.setLabel('bottom', text= 'Frequency', units = 'Hz', unitPrefix=None)
 
 # initialize the y-axis of the plot
@@ -66,25 +51,12 @@ fft_plot.enableAutoRange('xy', False)
 curve = fft_plot.plot(pen='g')
 
 def update():
-    global dut, curve, fft_plot, freq_range, center_freq, bandwidth
-    # read data
-    data, context = read_data_and_context(dut, SAMPLE_SIZE)
-    center_freq = context['rffreq']
-    bandwidth = context['bandwidth']
+    global dut, curve, fft_plot, START_FREQ, STOP_FREQ, SAMPLE_SIZE, RF_GAIN
+    # read data    
+    fstart, fstop, pow_data = sd.capture_power_spectrum(START_FREQ, STOP_FREQ, SAMPLE_SIZE, rfgain = RF_GAIN, antenna = 1)
     
-    # update axes limits
-    plot_xmin = (center_freq) - (bandwidth / 2)
-    plot_xmax = (center_freq) + (bandwidth / 2)
-    
-    # update the frequency range (Hz)
-    freq_range = np.linspace(plot_xmin , plot_xmax, SAMPLE_SIZE)
-    
-    # initialize the x-axis of the plot
-    fft_plot.setXRange(plot_xmin,plot_xmax)
-    fft_plot.setLabel('bottom', text= 'Frequency', units = 'Hz', unitPrefix=None)
-    
-    # compute the fft and plot the data
-    pow_data = compute_fft(dut, data, context)
+    # initialize the frequency range (Hz)
+    freq_range = np.linspace(START_FREQ , STOP_FREQ, len(pow_data))
     curve.setData(freq_range,pow_data, pen = 'g')
 
 timer = QtCore.QTimer()
