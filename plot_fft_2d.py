@@ -11,7 +11,7 @@ from pyrf.numpy_util import compute_fft
 import sys
 
 # plot constants
-center_freq = 2450 * 1e6 
+CENTER_FREQ = 2450 * 1e6 
 SAMPLE_SIZE = 1024
 RF_GAIN = 'high'
 IF_GAIN = 0
@@ -32,7 +32,7 @@ dut.connect(sys.argv[1])
 # initialize WSA constants
 dut.reset()
 dut.request_read_perm()
-dut.freq(center_freq)
+dut.freq(CENTER_FREQ)
 dut.gain(RF_GAIN)
 dut.ifgain(IF_GAIN)
 dut.fshift(FREQ_SHIFT)
@@ -42,14 +42,11 @@ dut.decimation(DECIMATION)
 fft_plot = win.addPlot(title="Power Vs. Frequency")
 
 # initialize axes limits
-plot_xmin = (center_freq) - (bandwidth / 2)
-plot_xmax = (center_freq) + (bandwidth / 2)
+plot_xmin = (CENTER_FREQ) - (bandwidth / 2)
+plot_xmax = (CENTER_FREQ) + (bandwidth / 2)
 
 plot_ymin = -130
 plot_ymax = 20
-
-# initialize the frequency range (Hz)
-freq_range = np.linspace(plot_xmin , plot_xmax, SAMPLE_SIZE)
 
 # initialize the x-axis of the plot
 fft_plot.setXRange(plot_xmin,plot_xmax)
@@ -66,15 +63,15 @@ fft_plot.enableAutoRange('xy', False)
 curve = fft_plot.plot(pen='g')
 
 def update():
-    global dut, curve, fft_plot, freq_range, center_freq, bandwidth
+    global dut, curve, fft_plot, CENTER_FREQ, bandwidth
     # read data
     data, context = read_data_and_context(dut, SAMPLE_SIZE)
-    center_freq = context['rffreq']
+    CENTER_FREQ = context['rffreq']
     bandwidth = context['bandwidth']
     
     # update axes limits
-    plot_xmin = (center_freq) - (bandwidth / 2)
-    plot_xmax = (center_freq) + (bandwidth / 2)
+    plot_xmin = (CENTER_FREQ) - (bandwidth / 2)
+    plot_xmax = (CENTER_FREQ) + (bandwidth / 2)
     
     # update the frequency range (Hz)
     freq_range = np.linspace(plot_xmin , plot_xmax, SAMPLE_SIZE)
