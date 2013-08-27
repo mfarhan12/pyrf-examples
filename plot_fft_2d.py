@@ -15,7 +15,7 @@ CENTER_FREQ = 2450 * 1e6
 SAMPLE_SIZE = 1024
 RF_GAIN = 'high'
 IF_GAIN = 0
-DECIMATION = 4
+DECIMATION = 1
 bandwidth = (125 *1e6) / DECIMATION
 FREQ_SHIFT = 0
 
@@ -33,9 +33,6 @@ dut.connect(sys.argv[1])
 dut.reset()
 dut.request_read_perm()
 dut.freq(CENTER_FREQ)
-dut.gain(RF_GAIN)
-dut.ifgain(IF_GAIN)
-dut.fshift(FREQ_SHIFT)
 dut.decimation(DECIMATION)
 
 # initialize plot
