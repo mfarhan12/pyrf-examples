@@ -87,7 +87,7 @@ def update():
     context['reflevel'] = STATIC_REFLEVEL
     # compute the fft of the complex data
     powData = compute_fft(dut, data, context)
-
+    zData = represent_fft_to_plot(powData)
 
     # move the data stream as well as colours back to show new data
     for i in range (ySize):

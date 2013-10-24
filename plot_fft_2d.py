@@ -34,7 +34,7 @@ dut.reset()
 dut.request_read_perm()
 dut.freq(CENTER_FREQ)
 dut.decimation(DECIMATION)
-
+dut.scpiset('INPUT:MODE HDR')
 # initialize plot
 fft_plot = win.addPlot(title="Power Vs. Frequency")
 
@@ -63,6 +63,7 @@ def update():
     global dut, curve, fft_plot, CENTER_FREQ, bandwidth
     # read data
     data, context = read_data_and_context(dut, SAMPLE_SIZE)
+    print data
     CENTER_FREQ = context['rffreq']
     bandwidth = context['bandwidth']
     
